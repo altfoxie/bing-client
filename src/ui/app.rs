@@ -20,14 +20,20 @@ impl Application {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         cc.egui_ctx
             .set_pixels_per_point(cc.egui_ctx.pixels_per_point() * 2.5);
-        Self::default()
+
+        let mut app = Self::default();
+        if let Some(cookie) = cc.storage.and_then(|s| s.get_string("cookie")) {
+            app.cookie = cookie;
+        }
+
+        app
     }
 }
 
 impl eframe::App for Application {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         self.ctx = Some(ctx.clone());
-        self.prepare_handles();
+        self.prepare_handles(frame);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -143,7 +149,7 @@ impl eframe::App for Application {
 }
 
 impl Application {
-    fn prepare_handles(&mut self) {
+    fn prepare_handles(&mut self, frame: &mut eframe::Frame) {
         if let Some(conversation) = self
             .add_conversation_handle
             .as_mut()
@@ -154,6 +160,11 @@ impl Application {
                 Ok(conversation) => {
                     self.conversations.push(conversation);
                     self.selected_conversation = self.conversations.len() - 1;
+
+                    if let Some(storage) = frame.storage_mut() {
+                        storage.set_string("cookie", self.cookie.clone());
+                        storage.flush();
+                    }
                 }
                 Err(e) => {
                     error!("failed to add conversation: {}", e);
