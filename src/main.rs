@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
         "Bing Client",
         NativeOptions {
             follow_system_theme: true,
-            default_theme: Theme::Light,
+            // default_theme: Theme::Light,
             ..Default::default()
         },
         Box::new(|cc| Box::new(Application::new(cc))),
