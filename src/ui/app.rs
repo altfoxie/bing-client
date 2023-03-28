@@ -18,7 +18,8 @@ pub struct Application {
 
 impl Application {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        cc.egui_ctx.set_pixels_per_point(1.25);
+        cc.egui_ctx
+            .set_pixels_per_point(cc.egui_ctx.pixels_per_point() * 2.5);
         Self::default()
     }
 }
