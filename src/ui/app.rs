@@ -134,7 +134,9 @@ impl eframe::App for Application {
                                                         ));
                                                     }
                                                     Message::Separator => {
+                                                        ui.add_space(4.0);
                                                         ui.separator();
+                                                        ui.add_space(4.0);
                                                     }
                                                 }
                                             }
