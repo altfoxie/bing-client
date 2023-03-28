@@ -93,6 +93,7 @@ impl Conversation {
                             }
                         }
                         messages.lock().unwrap().push(Message::Separator);
+                        ctx.request_repaint();
                         break;
                     }
                 }
