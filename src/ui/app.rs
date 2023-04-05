@@ -123,14 +123,20 @@ impl eframe::App for Application {
                                             for message in messages.iter().rev() {
                                                 match message {
                                                     Message::Text { sender, content } => {
-                                                        ui.label(format!(
-                                                            "{}: {}",
-                                                            match sender {
-                                                                Sender::User => "You",
-                                                                Sender::Bot => "Bot",
-                                                            },
-                                                            content
-                                                        ));
+                                                        egui::TextEdit::multiline(
+                                                            &mut format!(
+                                                                "{}: {}",
+                                                                match sender {
+                                                                    Sender::User => "You",
+                                                                    Sender::Bot => "Bot",
+                                                                },
+                                                                content
+                                                            )
+                                                            .as_str(),
+                                                        )
+                                                        .horizontal_align(egui::Align::Center)
+                                                        .desired_rows(1)
+                                                        .show(ui);
                                                     }
                                                     Message::Separator => {
                                                         ui.add_space(4.0);
