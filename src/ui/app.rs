@@ -4,13 +4,16 @@ use tokio::task::JoinHandle;
 
 use crate::bing::{self};
 
-use super::conversation::{Conversation, Message, Sender};
+use super::{
+    conversation::{Conversation, Message, Sender},
+    settings::Settings,
+};
 
 #[derive(Default)]
 pub struct Application {
     ctx: Option<egui::Context>,
+    settings: Settings,
     input: String,
-    cookie: String,
     selected_conversation: usize,
     conversations: Vec<Conversation>,
     add_conversation_handle: Option<JoinHandle<Result<Conversation, bing::Error>>>,
@@ -18,14 +21,9 @@ pub struct Application {
 
 impl Application {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        cc.egui_ctx
-            .set_pixels_per_point(cc.egui_ctx.pixels_per_point() * 2.5);
-
         let mut app = Self::default();
-        if let Some(cookie) = cc.storage.and_then(|s| s.get_string("cookie")) {
-            app.cookie = cookie;
-        }
-
+        app.settings = cc.storage.map_or(Settings::default(), |s| Settings::new(s));
+        app.settings.apply_on_creation(&cc.egui_ctx);
         app
     }
 }
@@ -38,7 +36,8 @@ impl eframe::App for Application {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.set_enabled(
-                    self.add_conversation_handle.is_none() && !self.cookie.trim().is_empty(),
+                    self.add_conversation_handle.is_none()
+                        && !self.settings.cookie.trim().is_empty(),
                 );
                 if ui.button("+").clicked() {
                     self.add_conversation();
@@ -78,7 +77,7 @@ impl eframe::App for Application {
                         ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                             ui.horizontal(|ui| {
                                 ui.label("Cookie:");
-                                ui.text_edit_singleline(&mut self.cookie);
+                                ui.text_edit_singleline(&mut self.settings.cookie);
                             });
 
                             ui.horizontal(|ui| {
@@ -164,8 +163,7 @@ impl Application {
                     self.selected_conversation = self.conversations.len() - 1;
 
                     if let Some(storage) = frame.storage_mut() {
-                        storage.set_string("cookie", self.cookie.clone());
-                        storage.flush();
+                        self.settings.save(storage)
                     }
                 }
                 Err(e) => {
@@ -177,7 +175,7 @@ impl Application {
     }
 
     fn add_conversation(&mut self) {
-        let cookie = self.cookie.clone();
+        let cookie = self.settings.cookie.clone();
         self.add_conversation_handle = Some(tokio::spawn(async {
             let conversation = bing::Conversation::new(cookie).await?;
             Ok(Conversation::new(conversation))
